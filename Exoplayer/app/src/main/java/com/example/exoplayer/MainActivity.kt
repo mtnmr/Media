@@ -8,16 +8,21 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.Player
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import com.example.exoplayer.databinding.ActivityMainBinding
+
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
     private var player: ExoPlayer? = null
+    private val playbackStateListener: Player.Listener = playbackStateListener()
 
     private var playWhenReady = true
     private var currentItem = 0
@@ -82,6 +87,8 @@ class MainActivity : AppCompatActivity() {
             playbackPosition = exoPlayer.contentPosition
             currentItem = exoPlayer.currentMediaItemIndex
             playWhenReady = exoPlayer.playWhenReady
+
+            exoPlayer.removeListener(playbackStateListener)
             exoPlayer.release()
         }
         player = null
@@ -115,7 +122,29 @@ class MainActivity : AppCompatActivity() {
 //                exoPlayer.addMediaItem(secondMediaItem)
                 exoPlayer.playWhenReady = playWhenReady
                 exoPlayer.seekTo(currentItem, playbackPosition)
+
+                exoPlayer.addListener(playbackStateListener)
                 exoPlayer.prepare()
             }
+    }
+
+}
+
+
+private const val TAG = "PlayerActivity"
+
+//エラーや再生状態の変更など、重要なプレーヤイベントを通知するために使用
+private fun playbackStateListener() = object : Player.Listener {
+
+    //再生状態が変化した時に呼び出される
+    override fun onPlaybackStateChanged(playbackState: Int) {
+        val stateString:String = when(playbackState){
+            ExoPlayer.STATE_IDLE -> "ExoPlayer.STATE_IDLE      -" //playerのインスタンス化はされたが準備まだ
+            ExoPlayer.STATE_BUFFERING -> "ExoPlayer.STATE_BUFFERING -" //十分なデータがばっだされておらず再生できない
+            ExoPlayer.STATE_READY -> "ExoPlayer.STATE_READY     -" //再生できる
+            ExoPlayer.STATE_ENDED -> "ExoPlayer.STATE_ENDED     -" //終了した
+            else -> "UNKNOWN_STATE             -"
+        }
+        Log.d(TAG, "changed state to $stateString")
     }
 }
