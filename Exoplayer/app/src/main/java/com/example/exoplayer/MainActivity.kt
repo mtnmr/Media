@@ -7,8 +7,10 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import com.example.exoplayer.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -86,15 +88,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializePlayer(){
+        /*
+        Adaptive Streaming
+        変化するネットワークに対応して、動画の再生品質を変え、ユーザーが快適に再生を続けることができるようにするストリーミング。
+        複数のビットレートのフラグメント（ビデオとオーディオそれぞれ数秒に区切ったもの）を用意して、それをクライアントが状況に応じて要求する
+         */
+        val trackSelector = DefaultTrackSelector(this).apply {
+            setParameters(buildUponParameters().setMaxVideoSizeSd())
+        }
+
         player = ExoPlayer.Builder(this)
+            .setTrackSelector(trackSelector)
             .build()
             .also { exoPlayer ->
                 binding.videoView.player = exoPlayer
+                //DASHというアダプティブ ストリーミング フォーマットを使用する。MediaItemはBuilderでMIMEタイプを指定して作成する。
+//                val mediaItem = MediaItem.fromUri(getString(R.string.media_url_mp4))
+                val mediaItem = MediaItem.Builder()
+                    .setUri(getString(R.string.media_url_dash))
+                    .setMimeType(MimeTypes.APPLICATION_MPD)
+                    .build()
+
+                exoPlayer.setMediaItem(mediaItem)
                 //playerにadd,move, removeなどの操作でプレイリストを作成できる
-                val mediaItem = MediaItem.fromUri(getString(R.string.media_url_mp4))
-                exoPlayer.addMediaItem(mediaItem)
-                val secondMediaItem = MediaItem.fromUri(getString(R.string.media_url_mp3))
-                exoPlayer.addMediaItem(secondMediaItem)
+//                val secondMediaItem = MediaItem.fromUri(getString(R.string.media_url_mp3))
+//                exoPlayer.addMediaItem(secondMediaItem)
                 exoPlayer.playWhenReady = playWhenReady
                 exoPlayer.seekTo(currentItem, playbackPosition)
                 exoPlayer.prepare()
