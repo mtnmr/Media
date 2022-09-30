@@ -1,8 +1,10 @@
 package com.example.exoplayer
 
 import android.annotation.SuppressLint
+import android.content.pm.ActivityInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.ImageView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -28,10 +30,28 @@ class MainActivity : AppCompatActivity() {
     private var currentItem = 0
     private var playbackPosition = 0L
 
+    private var isFullscreen = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+
+        val imageView = findViewById<ImageView>(R.id.imageview_fullscreen)
+
+        imageView.setOnClickListener {
+            if(isFullscreen){
+                imageView.setImageResource(R.drawable.ic_baseline_fullscreen_24)
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                isFullscreen = false
+            }else{
+                imageView.setImageResource(R.drawable.ic_baseline_fullscreen_exit_24)
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                isFullscreen = true
+            }
+        }
     }
 
     //APIレベル24以上のAndroid は、複数のウィンドウをサポートする。アプリは視認可能だが、分割ウィンドウモードではアクティブにならないため、onStartでプレーヤーを初期化する
@@ -56,8 +76,10 @@ class MainActivity : AppCompatActivity() {
     //全画面表示するために他のUIを非表示する
     private fun hideSystemUi() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        supportActionBar?.hide()
         WindowInsetsControllerCompat(window, binding.videoView).let { controller ->
             controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.hide(WindowInsetsCompat.Type.captionBar())
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
